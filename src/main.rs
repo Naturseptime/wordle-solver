@@ -3,8 +3,9 @@ use std::io::{self, BufRead};
 
 type CharNumber = u8;
 type BitMask = u32;
-const L: usize = 26; // Number of chars
-const N: usize = 5; // Number of slots
+
+const L: usize = 26; // Number of chars (2^L-1 should fit BitMask type)
+const N: usize = 5; // Number of slots (3^N-1 should fit in usize type)
 
 #[derive(Debug)]
 struct Candidates {
@@ -142,9 +143,9 @@ fn read_line() -> String {
     line.trim().to_string()
 }
 
-fn find_word_score(current_words: &Vec<String>, cword: &String) -> (String, i64) {
+fn find_word_score(current_solutions: &Vec<String>, cword: &String) -> (String, i64) {
     let mut results = vec![0_usize; 3_u32.pow(N as u32) as usize];
-    for hword in current_words.iter() {
+    for hword in current_solutions.iter() {
         results[encode_hints(&compare_words(
             &string_numbers(cword).unwrap(),
             &string_numbers(hword).unwrap()
@@ -159,9 +160,9 @@ fn find_word_score(current_words: &Vec<String>, cword: &String) -> (String, i64)
     (cword.clone(), r as i64)
 }
 
-fn worst_hints(current_words: &Vec<String>, cword: &Vec<CharNumber>) -> Vec<Hint> {
+fn worst_hints(current_solutions: &Vec<String>, cword: &Vec<CharNumber>) -> Vec<Hint> {
     let mut results = vec![0_usize; 3_u32.pow(N as u32) as usize];
-    for hword in current_words.iter() {
+    for hword in current_solutions.iter() {
         results[encode_hints(&compare_words(cword, &string_numbers(hword).unwrap()))] += 1;
     }
 
@@ -175,30 +176,36 @@ fn worst_hints(current_words: &Vec<String>, cword: &Vec<CharNumber>) -> Vec<Hint
     )
 }
 
-fn main() {
-    let reader = io::BufReader::new(File::open("words.txt").expect("File words.txt not found"));
-    let all_words = reader
+fn read_lines(filename: &str) -> Vec<String> {
+    let reader =
+        io::BufReader::new(File::open(filename).expect(&format!("File {} not found!", filename)));
+    let lines = reader
         .lines()
         .into_iter()
         .collect::<Result<Vec<String>, _>>()
         .expect("Error readling lines");
-    let words = all_words
-        .iter()
+    lines
+        .into_iter()
         .filter(|w| w.len() == N && w.chars().all(|w| w.is_ascii_alphabetic()))
         .map(|w| w.to_uppercase())
-        .collect::<Vec<String>>();
+        .collect()
+}
 
-    let mut current_words = words.clone();
+fn main() {
+    let all_solutions = read_lines("all_solutions.txt");
+    let all_guesses = read_lines("all_guesses.txt");
+
+    let mut current_solutions = all_solutions.clone();
     let mut ca = Candidates::new();
 
     loop {
-        if current_words.is_empty() {
+        if current_solutions.is_empty() {
             println!("No words found.");
             break;
         }
 
-        if current_words.len() == 1 {
-            println!("Finally found word {}", current_words.first().unwrap());
+        if current_solutions.len() == 1 {
+            println!("Finally found word {}", current_solutions.first().unwrap());
             break;
         }
 
@@ -211,7 +218,7 @@ fn main() {
             }
         };
 
-        println!("Worst hint: {:?}", worst_hints(&current_words, &guess));
+        println!("Worst hint: {:?}", worst_hints(&current_solutions, &guess));
 
         let hints = loop {
             println!("Hints for this word: (1 = here, 0 = nowhere, ? = elsewhere )");
@@ -222,25 +229,25 @@ fn main() {
             }
         };
 
-        println!("Computing words...");
+        println!("Computing words...\n");
 
         ca.apply_hints(&guess, &hints);
 
-        current_words = current_words
+        current_solutions = current_solutions
             .iter()
             .filter(|word| ca.word_fits(&string_numbers(word).unwrap()))
             .cloned()
             .collect::<Vec<String>>();
 
-        let mut best_words = words
+        let mut best_guesses = all_guesses
             .iter()
-            .map(|cword| find_word_score(&current_words, cword))
+            .map(|cword| find_word_score(&current_solutions, cword))
             .collect::<Vec<(String, i64)>>();
-        best_words.sort_by_key(|(_, s)| s.clone());
+        best_guesses.sort_by_key(|(_, s)| s.clone());
 
         println!(
-            "Best words: {} ",
-            best_words
+            "Guesses for quickly reducing the search space:\n{} \n",
+            best_guesses
                 .iter()
                 .take(100)
                 .map(|(x, y)| format!("{} ({})", x, y))
@@ -248,14 +255,14 @@ fn main() {
                 .join(", ")
         );
 
-        let mut final_words = current_words
+        let mut final_words = current_solutions
             .iter()
-            .map(|cword| find_word_score(&current_words, cword))
+            .map(|cword| find_word_score(&current_solutions, cword))
             .collect::<Vec<(String, i64)>>();
         final_words.sort_by_key(|(_, s)| s.clone());
 
         println!(
-            "Final words: {} ",
+            "Final guesses:\n{} \n",
             final_words
                 .iter()
                 .take(20)

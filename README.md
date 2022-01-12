@@ -1,10 +1,9 @@
 # worlde-solver
 Wordle solver using optimized words for guessing. Written in Rust.
 
-## Setup 
-Download a english word list (e.g. https://github.com/dwyl/english-words) and put it into a file words.txt
-
 ## Running
+
+    cargo run
 
 **Input:**
 1) The word you have guessed (e.g. PIZZA)
@@ -14,6 +13,8 @@ Syntax for hints:
 _0 = letter not in word_,
 _1 = correct letter here_,
 _? = correct letter elsewhere_
+
+The program needs two files all_solutions.txt (for final solutions) and all_guesses.txt (for intermediate guesses).
 
 **Output:**
 
