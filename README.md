@@ -3,7 +3,7 @@ Wordle solver using optimized words for guessing. Written in Rust.
 
 ## Running
 
-    cargo run
+    cargo run --release
 
 **Input:**
 1) The word you have guessed (e.g. PIZZA)
@@ -26,3 +26,9 @@ There are two kinds of word candinates.
 
 For each guessed word, the program also outputs the possible worst hint. 
 So one could play a two-player-variant of Wordle where one player want to solve the riddle quickly and another player tries to slow him down by giving bad hints.
+
+## Solution methods
+
+On each step the program searches for the best word for this step under following condition:
+
+If we split the solutions into categories corresponding to the different 3⁵ possible hints, the largest of these categories should be minimal size.

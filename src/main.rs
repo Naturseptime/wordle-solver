@@ -221,7 +221,7 @@ fn main() {
         println!("Worst hint: {:?}", worst_hints(&current_solutions, &guess));
 
         let hints = loop {
-            println!("Hints for this word: (1 = here, 0 = nowhere, ? = elsewhere )");
+            println!("Hints for this word: (1 = here, 0 = nowhere, ? = elsewhere)");
             let hints = hints_from_string(&read_line());
             match hints {
                 Ok(h) => break (h),
